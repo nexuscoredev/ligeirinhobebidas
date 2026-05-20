@@ -21,14 +21,25 @@ npm run preview
 
 ### Deploy (GitHub Pages)
 
-O site publica automaticamente na **main** via GitHub Actions.
+O workflow publica o build na branch **`gh-pages`**. A URL do site é:
 
-**URL:** https://nexuscoredev.github.io/ligeirinhobebidas/
+**https://nexuscoredev.github.io/ligeirinhobebidas/**
 
-**Configuração única no repositório (se ainda não fez):**
+#### Ativar o Pages (uma vez, precisa ser **admin** do repositório)
 
-1. GitHub → **Settings** → **Pages**
-2. Em **Build and deployment**, escolha **Source: GitHub Actions**
+Link direto: https://github.com/nexuscoredev/ligeirinhobebidas/settings/pages
+
+1. Abra o repositório no GitHub (não é o perfil da conta — é o repo `ligeirinhobebidas`).
+2. Aba **Settings** / **Configurações** (só aparece se você for administrador).
+3. Menu lateral → **Pages** / **Páginas** (seção *Code and automation* / *Código e automação*).
+4. Em **Build and deployment** / **Compilação e implantação** → **Source** / **Origem**:
+   - escolha **Deploy from a branch** / **Implantar a partir de um branch**
+   - **Branch:** `gh-pages` · pasta **`/ (root)`**
+5. **Save** / **Salvar**.
+
+> Se não existir a aba **Settings** ou o item **Pages**, peça a um dono da organização `nexuscoredev` para fazer esse passo ou te dar permissão de admin.
+
+Depois de salvar, em **Actions** rode de novo o workflow *Deploy site to GitHub Pages* (botão **Run workflow**) se o site ainda não abrir.
 
 Build local com o mesmo `base` do Pages:
 
