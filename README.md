@@ -19,9 +19,24 @@ npm run build  # gera dist/ para deploy estático
 npm run preview
 ```
 
-### Deploy
+### Deploy (GitHub Pages)
 
-O site é estático (Vite + React). Pode ser publicado em GitHub Pages, Azure Static Web Apps, Netlify, Vercel ou qualquer host de arquivos estáticos apontando para `site/dist` após `npm run build`.
+O site publica automaticamente na **main** via GitHub Actions.
+
+**URL:** https://nexuscoredev.github.io/ligeirinhobebidas/
+
+**Configuração única no repositório (se ainda não fez):**
+
+1. GitHub → **Settings** → **Pages**
+2. Em **Build and deployment**, escolha **Source: GitHub Actions**
+
+Build local com o mesmo `base` do Pages:
+
+```bash
+cd site
+PAGES_BASE=/ligeirinhobebidas/ npm run build
+npm run preview
+```
 
 ## Próximos passos (produto)
 
