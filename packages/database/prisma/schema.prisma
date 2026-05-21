@@ -1,0 +1,231 @@
+// Ligeirinho Hub — modelagem central (Semana 1: catálogo + PDV)
+// Docs: docs/database/modelagem-inicial.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Catálogo ---
+
+model Category {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String     @unique
+  description String?
+  parentId    String?    @map("parent_id") @db.Uuid
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  displayOrder Int       @default(0) @map("display_order")
+  iconUrl     String?    @map("icon_url")
+  showOnTotem Boolean    @default(true) @map("show_on_totem")
+  showOnPdv   Boolean    @default(true) @map("show_on_pdv")
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  products Product[]
+  combos   Combo[]
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Product {
+  id             String   @id @default(uuid()) @db.Uuid
+  sku            String?  @unique
+  barcode        String?  @unique
+  name           String
+  description    String?
+  categoryId     String   @map("category_id") @db.Uuid
+  category       Category @relation(fields: [categoryId], references: [id])
+  imageUrl       String?  @map("image_url")
+  /// Preço avulso quando não há tier aplicável (ex: 1 un sem faixa cadastrada)
+  basePriceCents Int?     @map("base_price_cents")
+  trackStock     Boolean  @default(false) @map("track_stock")
+  active         Boolean  @default(true)
+  showOnPdv      Boolean  @default(true) @map("show_on_pdv")
+  showOnTotem    Boolean  @default(true) @map("show_on_totem")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  priceTiers ProductPriceTier[]
+  comboItems ComboItem[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@index([name])
+  @@map("products")
+}
+
+/// Faixas de preço por quantidade — ex: 1–2 un @ R$ 7,50; 3+ un @ R$ 4,50/un
+model ProductPriceTier {
+  id             String    @id @default(uuid()) @db.Uuid
+  productId      String    @map("product_id") @db.Uuid
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minQuantity    Int       @map("min_quantity")
+  maxQuantity    Int?      @map("max_quantity")
+  unitPriceCents Int       @map("unit_price_cents")
+  label          String?
+  priority       Int       @default(0)
+  active         Boolean   @default(true)
+  validFrom      DateTime? @map("valid_from") @db.Timestamptz(3)
+  validUntil     DateTime? @map("valid_until") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([productId, minQuantity])
+  @@index([productId, minQuantity])
+  @@map("product_price_tiers")
+}
+
+enum ComboType {
+  FIXED_BUNDLE
+  QUANTITY_TIER
+  MIX_AND_MATCH
+}
+
+model Combo {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String    @unique
+  description     String?
+  type            ComboType
+  categoryId      String?   @map("category_id") @db.Uuid
+  category        Category? @relation(fields: [categoryId], references: [id])
+  fixedPriceCents Int?      @map("fixed_price_cents")
+  imageUrl        String?   @map("image_url")
+  active          Boolean   @default(true)
+  showOnPdv       Boolean   @default(true) @map("show_on_pdv")
+  showOnTotem     Boolean   @default(true) @map("show_on_totem")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  items      ComboItem[]
+  priceTiers ComboPriceTier[]
+  orderItems OrderItem[]
+
+  @@map("combos")
+}
+
+model ComboItem {
+  id           String  @id @default(uuid()) @db.Uuid
+  comboId      String  @map("combo_id") @db.Uuid
+  combo        Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  productId    String  @map("product_id") @db.Uuid
+  product      Product @relation(fields: [productId], references: [id])
+  quantity     Int     @default(1)
+  isRequired   Boolean @default(true) @map("is_required")
+  groupKey     String? @map("group_key")
+  minPick      Int?    @map("min_pick")
+  maxPick      Int?    @map("max_pick")
+  displayOrder Int     @default(0) @map("display_order")
+
+  @@unique([comboId, productId])
+  @@map("combo_items")
+}
+
+model ComboPriceTier {
+  id              String  @id @default(uuid()) @db.Uuid
+  comboId         String  @map("combo_id") @db.Uuid
+  combo           Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  minQuantity     Int     @map("min_quantity")
+  maxQuantity     Int?    @map("max_quantity")
+  unitPriceCents  Int?    @map("unit_price_cents")
+  totalPriceCents Int?    @map("total_price_cents")
+  label           String?
+  active          Boolean @default(true)
+
+  @@index([comboId, minQuantity])
+  @@map("combo_price_tiers")
+}
+
+// --- Pedidos ---
+
+enum OrderChannel {
+  PDV
+  TOTEM
+  APP
+  CAYENA
+  WHATSAPP
+}
+
+enum OrderStatus {
+  NOVO
+  EM_PREPARACAO
+  EM_ROTA
+  CONCLUIDO
+  CANCELADO
+}
+
+model Order {
+  id            String       @id @default(uuid()) @db.Uuid
+  orderNumber   String       @unique @map("order_number")
+  channel       OrderChannel
+  status        OrderStatus  @default(NOVO)
+  customerName  String?      @map("customer_name")
+  customerPhone String?      @map("customer_phone")
+  notes         String?
+  subtotalCents Int          @default(0) @map("subtotal_cents")
+  discountCents Int          @default(0) @map("discount_cents")
+  totalCents    Int          @default(0) @map("total_cents")
+  assignedToId  String?      @map("assigned_to_id") @db.Uuid
+  externalRef   String?      @map("external_ref")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+  completedAt   DateTime?    @map("completed_at") @db.Timestamptz(3)
+
+  items    OrderItem[]
+  payments OrderPayment[]
+
+  @@index([status, createdAt])
+  @@index([channel])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String   @id @default(uuid()) @db.Uuid
+  orderId             String   @map("order_id") @db.Uuid
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId           String?  @map("product_id") @db.Uuid
+  product             Product? @relation(fields: [productId], references: [id])
+  comboId             String?  @map("combo_id") @db.Uuid
+  combo               Combo?   @relation(fields: [comboId], references: [id])
+  quantity            Int
+  unitPriceCents      Int      @map("unit_price_cents")
+  lineTotalCents      Int      @map("line_total_cents")
+  productNameSnapshot String   @map("product_name_snapshot")
+  priceTierLabel      String?  @map("price_tier_label")
+  pricingRuleSnapshot Json?    @map("pricing_rule_snapshot")
+  displayOrder        Int      @default(0) @map("display_order")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+enum PaymentMethod {
+  DINHEIRO
+  PIX
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  OUTRO
+}
+
+model OrderPayment {
+  id           String        @id @default(uuid()) @db.Uuid
+  orderId      String        @map("order_id") @db.Uuid
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method       PaymentMethod
+  amountCents  Int           @map("amount_cents")
+  paidAt       DateTime?     @map("paid_at") @db.Timestamptz(3)
+  externalTxId String?       @map("external_tx_id")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([orderId])
+  @@map("order_payments")
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@ligeirinho/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tipos e constantes compartilhados entre apps",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}
