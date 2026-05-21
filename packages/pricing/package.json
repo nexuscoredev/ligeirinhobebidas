@@ -1,0 +1,15 @@
+{
+  "name": "@ligeirinho/pricing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Motor de resolução de preços por faixa e combos",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

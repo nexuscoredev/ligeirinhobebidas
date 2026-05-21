@@ -1,0 +1,19 @@
+{
+  "name": "ligeirinho-hub",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Ecossistema Ligeirinho Hub — PDV, Totem, App Operacional e API central",
+  "scripts": {
+    "db:generate": "npm run generate -w @ligeirinho/database",
+    "db:migrate": "npm run migrate:dev -w @ligeirinho/database",
+    "db:studio": "npm run studio -w @ligeirinho/database"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "site"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -8,6 +8,26 @@ Repositório do ecossistema **Ligeirinho Hub** — PDV, Totem, App e Entregas in
 |------|-----------|
 | `Ligeirinho-Hub-Apresentacao.pdf` | Apresentação com visão do produto e plano de implantação |
 | `site/` | Site institucional (landing page) |
+| `apps/` | PDV, Totem, App operacional e API (scaffolds Semana 1) |
+| `packages/database` | Modelagem Prisma (PostgreSQL) |
+| `packages/pricing` | Motor de preço por faixa / combo |
+| `docs/` | Arquitetura do monorepo e modelagem do banco |
+
+## Monorepo (Semana 1)
+
+Estrutura e banco inicial documentados em:
+
+- [docs/arquitetura/estrutura-monorepo.md](docs/arquitetura/estrutura-monorepo.md)
+- [docs/database/modelagem-inicial.md](docs/database/modelagem-inicial.md)
+
+```bash
+npm install
+cp packages/database/.env.example packages/database/.env
+# editar DATABASE_URL (PostgreSQL local ou Docker)
+npm run db:generate
+npm run db:migrate
+npm run seed -w @ligeirinho/database
+```
 
 ## Site
 
